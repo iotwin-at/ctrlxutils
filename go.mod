@@ -1,4 +1,4 @@
-module github.com/iotwin-at/iot-ctrlxutils
+module github.com/iotwin-at/ctrlxutils
 
 go 1.23.0
 
