@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/uoul/go-common/serialization"
+	"github.com/uoul/go-serialization"
 )
 
 func MarshalAppdata[T any](serializer serialization.ISerializer, file string, permission os.FileMode, data T) error {

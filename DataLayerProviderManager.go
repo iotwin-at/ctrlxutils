@@ -2,15 +2,14 @@ package ctrlxutils
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/boschrexroth/ctrlx-datalayer-golang/v2/pkg/datalayer"
-	"github.com/uoul/go-common/log"
 )
 
 type DataLayerProviderManager struct {
 	ctx        context.Context
-	logger     log.ILogger
 	providers  []IDataLayerProvider
 	dlConnStr  string
 	dlRootPath string
@@ -24,10 +23,9 @@ func WithProvider(p IDataLayerProvider) func(*DataLayerProviderManager) {
 	}
 }
 
-func NewDataLayerProviderManager(ctx context.Context, logger log.ILogger, dlConnStr string, dlRootPath string, opts ...func(*DataLayerProviderManager)) *DataLayerProviderManager {
+func NewDataLayerProviderManager(ctx context.Context, dlConnStr string, dlRootPath string, opts ...func(*DataLayerProviderManager)) *DataLayerProviderManager {
 	d := &DataLayerProviderManager{
 		ctx:           ctx,
-		logger:        logger,
 		dlConnStr:     dlConnStr,
 		dlRootPath:    dlRootPath,
 		retryInterval: 30 * time.Second,
@@ -38,17 +36,17 @@ func NewDataLayerProviderManager(ctx context.Context, logger log.ILogger, dlConn
 	// Run Providers
 	go func() {
 		// Create Datalayer system
-		logger.Debug("Creating DatalayerSystem...")
+		slog.Debug("Creating DatalayerSystem...")
 		dlSys := datalayer.NewSystem("")
 		dlSys.Start(false)
 		// Create Datalayer provider
-		logger.Debugf("Creating Datalayer Providers for %s...", dlConnStr)
+		slog.Debug("Creating Datalayer Providers...", slog.String("address", dlConnStr))
 		dlProvider := dlSys.Factory().CreateProvider(dlConnStr)
 		dlProvider.Start()
 		// Run Providers
 		for _, p := range d.providers {
 			// Spawn new go routine for all providers
-			logger.Debugf("Creating DatalayerProvider(%s)...", p.Name())
+			slog.Debug("Creating DatalayerProvider...", slog.String("provider", p.Name()))
 			go func() {
 				for {
 					err := p.Run(ctx, dlProvider, dlRootPath)
@@ -57,7 +55,7 @@ func NewDataLayerProviderManager(ctx context.Context, logger log.ILogger, dlConn
 						return
 					}
 					// Provider terminated with error
-					d.logger.Error(err.Error())
+					slog.Error("Datalayer Provider terminated with error", slog.String("provider", p.Name()), slog.Any("error", err))
 					time.Sleep(d.retryInterval)
 				}
 			}()
