@@ -100,13 +100,9 @@ func main() {
 		"properties.json",
 	)
 
-	// Create Logger for Ctrlx Logbook
-	logger, _ := ctrlxutils.NewJournaldLogger(ctx, "", log.INFO)
-
 	// Create provider manager
 	ctrlxutils.NewDataLayerProviderManager(
 		ctx,
-		logger,
 		"ipc://",     // Datalayer interface (for local deployment as snap always ips://)
 		"MyFancyApp", // Datalayer RootPath
 		ctrlxutils.WithProvider(NewCounterProvider(appConfig.UpdateRate)), // Register our CounterProvider from above (you can register multiple providers here)
